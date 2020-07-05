@@ -1,0 +1,35 @@
+version: '3.7'
+
+x-common: &common
+  build: .
+  ports:
+      - "8000:8000"
+
+
+# Services not meant to be started all at once
+# see the run_test.py for details
+
+services:
+  flask_marshmallow_uwsgi:
+    <<: *common
+    working_dir: /app_flask_marshmallow
+    command: uwsgi --http 0.0.0.0:8000 --module main:app --workers ${WORKERS}
+  
+  drf_uwsgi:
+    <<: *common
+    working_dir: /app_drf
+    command: uwsgi --http 0.0.0.0:8000 --module drf.wsgi:application --workers ${WORKERS}
+
+  ninja_uwsgi:
+    <<: *common
+    working_dir: /app_ninja
+    command: uwsgi --http 0.0.0.0:8000 --module djninja.wsgi:application --workers ${WORKERS}
+
+  ninja_uvicorn:
+    <<: *common
+    working_dir: /app_ninja
+    command: uvicorn djninja.asgi:application --host 0.0.0.0 --workers ${WORKERS}
+
+  network_service:
+    build: .
+    command: python network_service.py > /dev/null
