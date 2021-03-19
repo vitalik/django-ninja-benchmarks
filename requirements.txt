@@ -1,4 +1,4 @@
-Django==3.1b1
+Django==3.1.6
 
 django-ninja==0.2.0
 pydantic==1.5.1
