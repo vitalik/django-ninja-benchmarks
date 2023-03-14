@@ -1,20 +1,16 @@
-import time
-import re
 import os
-import sys
+import re
 import subprocess
-
-
-C1_FRAMEWORKS = [
-    'flask_marshmallow_uwsgi',
-    'drf_uwsgi',
-    'ninja_uwsgi',
-]
+import time
 
 CONCURRENT_FRAMEWORKS = [
     'flask_marshmallow_uwsgi',
     'drf_uwsgi',
+    'ninja_uwsgi',
+    'ninja_gunicorn',
     'ninja_uvicorn',
+    'fastapi_gunicorn',
+    'fastapi_uvicorn'
 ]
 
 
@@ -45,13 +41,10 @@ def benchmark(url, concurency, count, payload=None):
 
 
 def parse_benchmark(output: str):
-    # print(output)
     rps = re.findall(r'Requests per second: \s+(.*?)\s', output)[0]
     p50 = re.findall(r'\s+50%\s+(\d+)', output)[0]
     p99 = re.findall(r'\s+99%\s+(\d+)', output)[0]
-    return (rps, p50, p99)
-    # print()
-    # re.findall(r'')
+    return rps, p50, p99
 
 
 def preheat():
@@ -59,15 +52,10 @@ def preheat():
     benchmark('http://127.0.0.1:8000/api/iojob', 1, 5)
 
 
-def run_c1_test():
-    return benchmark('http://127.0.0.1:8000/api/create', 1, 1000, 'payload.json')
-
-
-WORKERS_CASES = list(range(1, 25))  # [14, 15, 16, 17, 18, 19, 20]
+WORKERS_CASES = [1, 2, 4, 8, 16, 32, 64]
 
 
 def test_concurrent(name):
-
     results = {}
     for workers in WORKERS_CASES:
         with FrameworkService(name, workers):
@@ -88,13 +76,17 @@ def main():
     print('Framework               :', end='')
     for w in WORKERS_CASES:
         print(f'{w:>9}', end='')
-    print('')
+
+    print()
+
     for framework, results in sorted(results.items()):
         print(f'{framework:<23} :', end='')
         for w in WORKERS_CASES:
             print(f'{results[w][0]:>9}', end='')
-        print('')
+        print()
 
+    print('Columns indicate the number of workers in each run')
+    print('Values are in requests per second - higher is better.')
 
 if __name__ == '__main__':
     main()

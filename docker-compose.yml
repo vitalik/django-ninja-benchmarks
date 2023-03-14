@@ -30,6 +30,21 @@ services:
     working_dir: /app_ninja
     command: uvicorn djninja.asgi:application --host 0.0.0.0 --workers ${WORKERS}
 
+  ninja_gunicorn:
+    <<: *common
+    working_dir: /app_ninja
+    command: gunicorn djninja.asgi:application --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers ${WORKERS}
+
+  fastapi_gunicorn:
+    <<: *common
+    working_dir: /app_fastapi
+    command: gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers ${WORKERS}
+
+  fastapi_uvicorn:
+    <<: *common
+    working_dir: /app_fastapi
+    command: uvicorn main:app --host 0.0.0.0 --workers ${WORKERS}
+
   network_service:
     build: .
     command: python network_service.py > /dev/null
