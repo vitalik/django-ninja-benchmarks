@@ -1,18 +1,19 @@
-Django==3.1b1
+Django==4.2.3
 
-django-ninja==0.2.0
-pydantic==1.5.1
+django-ninja==0.22.2
+pydantic==1.10.10
+fastapi==0.99.0
 
-djangorestframework==3.11.0
+djangorestframework==3.14.0
 
-Flask==1.1.2
-marshmallow==3.6.1
+Flask==2.3.2
+marshmallow==3.19.0
 
-sanic==20.6.3
+sanic==23.3.0
 
-uvicorn==0.11.5
-uWSGI==2.0.19.1
+uvicorn
+uWSGI
 
-aiohttp==3.6.2
+aiohttp
 
-requests
+requests==2.31.0

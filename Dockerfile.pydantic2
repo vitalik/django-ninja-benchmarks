@@ -1,0 +1,8 @@
+FROM benchmark-common
+
+ENV PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=on
+
+RUN pip uninstall --yes django-ninja fastapi pydantic
+RUN pip install pydantic==2 fastapi==0.100.0b2
+
+COPY ninja /app_ninja/ninja

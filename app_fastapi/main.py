@@ -1,9 +1,10 @@
 import aiohttp
 import datetime
 from typing import List
-from ninja import NinjaAPI
-from ninja.schema import Schema
-from pydantic import PositiveInt, constr, BaseModel, Field
+
+import requests
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
 
 
 class Location(BaseModel):
@@ -33,18 +34,17 @@ class Model(BaseModel):
     skills: List[Skill]
 
 
-
-api = NinjaAPI()
-
-
-@api.post("/create")
-def create(request, model: Model):
-    return {"success": True}
+app = FastAPI()
 
 
-@api.get("/iojob")
-async def iojob(request):
+@app.post("/api/create")
+async def create(data: Model):
+    return {"success": True}, 201
+
+
+@app.get("/api/iojob")
+async def iojob():
     async with aiohttp.ClientSession() as http_client:
         r = await http_client.get('http://network_service:8000/job')
         data = await r.text()
-    return {"success": True}
+    return {"success": True}, 200

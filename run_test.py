@@ -9,12 +9,18 @@ C1_FRAMEWORKS = [
     'flask_marshmallow_uwsgi',
     'drf_uwsgi',
     'ninja_uwsgi',
+    'ninja_uvicorn',
+    'ninja_uwsgi_pydantic2',
+    'fastapi_uvicorn_pydantic2',
+    'fastapi_uvicorn',
 ]
 
 CONCURRENT_FRAMEWORKS = [
-    'flask_marshmallow_uwsgi',
-    'drf_uwsgi',
+    # 'fastapi_uvicorn',
+    # 'flask_marshmallow_uwsgi',
+    # 'drf_uwsgi',
     'ninja_uvicorn',
+    'ninja_uwsgi_pydantic2',
 ]
 
 
@@ -50,8 +56,6 @@ def parse_benchmark(output: str):
     p50 = re.findall(r'\s+50%\s+(\d+)', output)[0]
     p99 = re.findall(r'\s+99%\s+(\d+)', output)[0]
     return (rps, p50, p99)
-    # print()
-    # re.findall(r'')
 
 
 def preheat():
@@ -63,38 +67,55 @@ def run_c1_test():
     return benchmark('http://127.0.0.1:8000/api/create', 1, 1000, 'payload.json')
 
 
-WORKERS_CASES = list(range(1, 25))  # [14, 15, 16, 17, 18, 19, 20]
 
-
-def test_concurrent(name):
-
+def test_c1(name, workers_cases):
     results = {}
-    for workers in WORKERS_CASES:
-        with FrameworkService(name, workers):
+    for n_workers in workers_cases:
+        print(f'--- {name} {n_workers} -------------------------------------------')
+        with FrameworkService(name, n_workers):
+            preheat()
+            res = benchmark('http://127.0.0.1:8000/api/create', 1, 3000, 'payload.json')
+            results[n_workers] = res
+    return results
+
+def test_concurrent(name, workers_cases):
+    results = {}
+    for n_workers in workers_cases:
+        print(f'--- {name} {n_workers} -------------------------------------------')
+        with FrameworkService(name, n_workers):
             preheat()
             res = benchmark('http://127.0.0.1:8000/api/iojob', 50, 200)
-            results[workers] = res
+            results[n_workers] = res
     return results
 
 
-def main():
-    os.system(f'docker-compose build')
-    os.system(f'docker-compose down')
+def run(title, frameworks, func, workers_cases):
 
     results = {}
-    for framework in CONCURRENT_FRAMEWORKS:
-        results[framework] = test_concurrent(framework)
+    for framework in frameworks:
+        results[framework] = func(framework, workers_cases)
 
-    print('Framework               :', end='')
-    for w in WORKERS_CASES:
+    print(title)
+    print(f'{"Framework/Workers":<26} :', end='')
+    for w in workers_cases:
         print(f'{w:>9}', end='')
     print('')
     for framework, results in sorted(results.items()):
-        print(f'{framework:<23} :', end='')
-        for w in WORKERS_CASES:
+        print(f'{framework:<26} :', end='')
+        for w in workers_cases:
             print(f'{results[w][0]:>9}', end='')
         print('')
 
+
+def main():
+    # os.system(f'docker-compose build')
+    os.system('docker build --tag=benchmark-common .')
+    os.system('docker build --tag=benchmark-pydantic2 -f Dockerfile.pydantic2 .')
+
+    os.system(f'docker-compose down')
+
+    # run('Concurrent test', CONCURRENT_FRAMEWORKS, test_concurrent, [1,2,5,10])
+    run('CPU/parsing test', C1_FRAMEWORKS, test_c1, [1])
 
 if __name__ == '__main__':
     main()
